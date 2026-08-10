@@ -14,11 +14,23 @@ class Link:
         angle: Current joint angle in radians.
         min_angle: Minimum allowed angle in radians (optional).
         max_angle: Maximum allowed angle in radians (optional).
+        angle_limit_min: Alias for min_angle (deprecated, use min_angle).
+        angle_limit_max: Alias for max_angle (deprecated, use max_angle).
     """
     length: float
     angle: float = 0.0
     min_angle: Optional[float] = None
     max_angle: Optional[float] = None
+    
+    @property
+    def angle_limit_min(self) -> Optional[float]:
+        """Deprecated alias for min_angle."""
+        return self.min_angle
+    
+    @property
+    def angle_limit_max(self) -> Optional[float]:
+        """Deprecated alias for max_angle."""
+        return self.max_angle
     
     def validate_angle(self) -> bool:
         """Check if current angle is within limits."""
