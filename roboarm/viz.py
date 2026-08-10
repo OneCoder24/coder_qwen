@@ -8,6 +8,15 @@ from matplotlib.backend_bases import MouseEvent
 
 from .arm import RobotArm
 from .kinematics import forward_kinematics, inverse_kinematics_ccd
+from .planner import (
+    generate_line_trajectory,
+    generate_circle_trajectory,
+    generate_figure8_trajectory,
+    follow_trajectory,
+    smooth_trajectory_follow,
+    interpolate_angles,
+    limit_angle_velocity,
+)
 
 
 def plot_arm(
@@ -145,7 +154,9 @@ def interactive_arm(
     arm: Optional[RobotArm] = None,
     max_iterations: int = 50,
     tolerance: float = 1e-2,
-    smoothing_factor: float = 0.1
+    smoothing_factor: float = 0.1,
+    show_trail: bool = True,
+    joint_limits: Optional[List[Tuple[Optional[float], Optional[float]]]] = None
 ) -> None:
     """Interactive mode: click to set target, arm follows in real-time.
     
@@ -154,9 +165,18 @@ def interactive_arm(
         max_iterations: Max CCD iterations per click.
         tolerance: IK convergence tolerance.
         smoothing_factor: Factor for smooth angle interpolation (0-1).
+        show_trail: Whether to show end-effector trail.
+        joint_limits: Optional list of (min_angle, max_angle) tuples for each joint.
     """
     if arm is None:
         arm = RobotArm.create_default()
+    
+    # Apply joint limits if provided
+    if joint_limits is not None:
+        for i, (min_ang, max_ang) in enumerate(joint_limits):
+            if i < len(arm.links):
+                arm.links[i].min_angle = min_ang
+                arm.links[i].max_angle = max_ang
     
     fig, ax = plt.subplots(figsize=(9, 9))
     
@@ -202,7 +222,7 @@ def interactive_arm(
         else:
             target_point.set_visible(False)
         
-        if trail_points:
+        if show_trail and trail_points:
             trail_x = [p[0] for p in trail_points]
             trail_y = [p[1] for p in trail_points]
             trail_line.set_data(trail_x, trail_y)
@@ -239,10 +259,10 @@ def interactive_arm(
             
             # Apply joint limits if any
             for i, link in enumerate(arm.links):
-                if link.angle_limit_min is not None:
-                    interpolated[i] = max(interpolated[i], link.angle_limit_min)
-                if link.angle_limit_max is not None:
-                    interpolated[i] = min(interpolated[i], link.angle_limit_max)
+                if link.min_angle is not None:
+                    interpolated[i] = max(interpolated[i], link.min_angle)
+                if link.max_angle is not None:
+                    interpolated[i] = min(interpolated[i], link.max_angle)
             
             current_angles = interpolated
             draw_arm(current_angles, new_target)
