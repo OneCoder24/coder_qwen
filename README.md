@@ -37,6 +37,20 @@ See the arm move through a sequence of poses:
 python main.py animate
 ```
 
+### Run Inverse Kinematics Demo
+
+Compute joint angles to reach a target point:
+
+```bash
+python main.py ik
+```
+
+This will:
+1. Set up a 3-link arm with all joints at 0°
+2. Define a target point at (2.0, 1.0)
+3. Use CCD algorithm to compute required joint angles
+4. Display the result with matplotlib
+
 ### Run Tests
 
 ```bash
@@ -80,15 +94,31 @@ links = [
 arm = RobotArm(links=links, base_position=(0, 0))
 ```
 
-### Forward Kinematics
+### Inverse Kinematics
 
 ```python
-from roboarm.kinematics import forward_kinematics
+from roboarm.kinematics import inverse_kinematics_ccd
 
-arm.set_angles([0, np.pi/4, -np.pi/8])
+# Set initial angles
+arm.set_angles([0, 0, 0])
+
+# Define target
+target = np.array([2.0, 1.0])
+
+# Compute joint angles using CCD
+angles = inverse_kinematics_ccd(arm, target, max_iterations=100, tolerance=1e-3)
+
+# Apply and verify
+arm.set_angles(angles)
 positions, end_effector = forward_kinematics(arm)
-print(f"End effector at: {end_effector}")
+print(f"Distance to target: {np.linalg.norm(end_effector - target)}")
 ```
+
+**Algorithm**: Currently implements Cyclic Coordinate Descent (CCD):
+- Iteratively adjusts each joint from last to first
+- Minimizes distance between end-effector and target
+- Respects joint angle limits if defined
+- Handles unreachable targets by extending fully toward the target
 
 ### Visualize
 

@@ -2,7 +2,7 @@
 
 import numpy as np
 from roboarm.arm import RobotArm
-from roboarm.kinematics import forward_kinematics
+from roboarm.kinematics import forward_kinematics, inverse_kinematics_ccd
 from roboarm.viz import plot_arm, create_animation
 
 
@@ -51,10 +51,45 @@ def demo_animation():
     plt.show()
 
 
+def demo_ik():
+    """Demonstrate inverse kinematics."""
+    print("=== Inverse Kinematics Demo ===")
+    
+    arm = RobotArm.create_default()
+    arm.set_angles([0.0, 0.0, 0.0])
+    
+    # Define target point
+    target = np.array([2.0, 1.0])
+    print(f"Target: {target}")
+    
+    # Compute IK using CCD
+    angles = inverse_kinematics_ccd(arm, target, max_iterations=100, tolerance=1e-3)
+    print(f"Computed angles: {[f'{a:.4f}' for a in angles]}")
+    
+    # Apply computed angles and verify
+    arm.set_angles(angles)
+    positions, end_effector = forward_kinematics(arm)
+    
+    distance = np.linalg.norm(end_effector - target)
+    print(f"End effector position: {end_effector}")
+    print(f"Distance to target: {distance:.6f}")
+    
+    # Plot result
+    plot_arm(arm, target=tuple(target), show=True)
+    
+    print("\nIK test passed!" if distance < 0.01 else "\nIK test failed!")
+
+
 if __name__ == "__main__":
     import sys
     
-    if len(sys.argv) > 1 and sys.argv[1] == "animate":
-        demo_animation()
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "animate":
+            demo_animation()
+        elif sys.argv[1] == "ik":
+            demo_ik()
+        else:
+            print(f"Unknown command: {sys.argv[1]}")
+            print("Usage: python main.py [animate|ik]")
     else:
         demo_static()
