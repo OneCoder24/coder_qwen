@@ -205,11 +205,15 @@ def interactive_arm(
     current_target: Optional[np.ndarray] = None
     
     # Current angles for smooth interpolation
-    current_angles = arm.get_angles().copy()
+    current_angles = np.array(arm.get_angles())
     
-    def draw_arm(angles: np.ndarray, target: Optional[np.ndarray] = None):
+    def draw_arm(angles, target: Optional[np.ndarray] = None):
         """Draw the arm with given angles."""
-        arm.set_angles(angles.tolist())
+        if isinstance(angles, np.ndarray):
+            angles_list = angles.tolist()
+        else:
+            angles_list = angles
+        arm.set_angles(angles_list)
         positions, end_eff = forward_kinematics(arm)
         
         line.set_data(positions[:, 0], positions[:, 1])
