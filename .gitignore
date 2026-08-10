@@ -1,0 +1,135 @@
+```gitignore
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.venv/
+venv/
+ENV/
+.env
+.env.local
+.env.*
+!requirements.txt
+!Pipfile
+!Pipfile.lock
+!setup.py
+!pyproject.toml
+!poetry.lock
+
+# Visual Studio Code
+.vscode/
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+
+# Testing
+.pytest_cache/
+.hypothesis/
+.coverage*
+htmlcov/
+.coverage
+.tox/
+.nox/
+
+# IDEs
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Thumbs.db:encryptable
+*:Zone.Identifier
+desktop.ini
+*.nib
+*~
+*.tmp
+*.bak
+*.old
+*.orig
+*.rej
+*.swp
+*.swo
+*~
+
+# Local configuration files
+.config/
+.settings/
+.project
+.classpath
+.pydevproject
+
+# Environment specific
+.env
+.env.local
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+!.env.default
+
+# Build artifacts
+build/
+dist/
+*.egg
+*.egg-info/
+*.so
+.libs/
+.deps/
+
+# C extensions
+*.so
+
+# Documentation
+docs/_build/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Coverage reports
+coverage/
+htmlcov/
+
+# PyTest
+.pytest_cache/
+__pycache__/
+```
