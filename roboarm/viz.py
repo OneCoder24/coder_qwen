@@ -218,10 +218,10 @@ def interactive_arm(
         
         line.set_data(positions[:, 0], positions[:, 1])
         joints.set_data(positions[:, 0], positions[:, 1])
-        end_effector_point.set_data(end_eff[0], end_eff[1])
+        end_effector_point.set_data([end_eff[0]], [end_eff[1]])
         
         if target is not None:
-            target_point.set_data(target[0], target[1])
+            target_point.set_data([target[0]], [target[1]])
             target_point.set_visible(True)
         else:
             target_point.set_visible(False)
