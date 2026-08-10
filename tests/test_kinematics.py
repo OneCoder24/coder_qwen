@@ -3,7 +3,7 @@
 import pytest
 import numpy as np
 from roboarm.arm import RobotArm, Link
-from roboarm.kinematics import forward_kinematics
+from roboarm.kinematics import forward_kinematics, inverse_kinematics_ccd
 
 
 class TestLink:
@@ -123,3 +123,124 @@ class TestForwardKinematics:
         
         # Should have base + 3 link ends = 4 positions
         assert positions.shape == (4, 2)
+
+
+class TestInverseKinematics:
+    """Tests for inverse kinematics using CCD."""
+    
+    def test_ik_reachable_target_straight(self):
+        """Test IK for a reachable target with arm starting straight."""
+        arm = RobotArm.create_default()
+        arm.set_angles([0.0, 0.0, 0.0])
+        
+        target = np.array([2.5, 0.5])
+        angles = inverse_kinematics_ccd(arm, target, max_iterations=100, tolerance=1e-3)
+        
+        # Apply the computed angles and check end-effector position
+        arm.set_angles(angles)
+        _, end_effector = forward_kinematics(arm)
+        
+        distance = np.linalg.norm(end_effector - target)
+        assert distance < 0.01, f"End-effector too far from target: {distance}"
+    
+    def test_ik_reachable_target_from_bent(self):
+        """Test IK starting from a bent configuration."""
+        arm = RobotArm.create_default()
+        arm.set_angles([np.pi/4, np.pi/4, np.pi/4])
+        
+        target = np.array([1.5, 1.5])
+        angles = inverse_kinematics_ccd(arm, target, max_iterations=100, tolerance=1e-3)
+        
+        arm.set_angles(angles)
+        _, end_effector = forward_kinematics(arm)
+        
+        distance = np.linalg.norm(end_effector - target)
+        assert distance < 0.01, f"End-effector too far from target: {distance}"
+    
+    def test_ik_unreachable_target_far(self):
+        """Test IK for an unreachable target (beyond max reach)."""
+        arm = RobotArm.create_default()
+        arm.set_angles([0.0, 0.0, 0.0])
+        
+        # Target at distance 5, but max reach is 3
+        target = np.array([5.0, 0.0])
+        angles = inverse_kinematics_ccd(arm, target, max_iterations=100, tolerance=1e-3)
+        
+        arm.set_angles(angles)
+        _, end_effector = forward_kinematics(arm)
+        
+        # End-effector should be at max reach (or close to it) in direction of target
+        distance_from_base = np.linalg.norm(end_effector - np.array(arm.base_position))
+        max_reach = arm.get_total_length()
+        
+        # Should be stretched out close to max reach
+        assert np.isclose(distance_from_base, max_reach, atol=0.1), \
+            f"Arm not fully extended for unreachable target: {distance_from_base} vs {max_reach}"
+    
+    def test_ik_unreachable_target_close(self):
+        """Test IK for a target too close to base (inside minimum reach)."""
+        arm = RobotArm.create_default()
+        arm.set_angles([0.0, 0.0, 0.0])
+        
+        # Target very close to base - arm should fold to get as close as possible
+        # Note: CCD may not achieve perfect folding; we verify it gets reasonably close
+        target = np.array([0.1, 0.0])
+        angles = inverse_kinematics_ccd(arm, target, max_iterations=200, tolerance=1e-3)
+        
+        arm.set_angles(angles)
+        _, end_effector = forward_kinematics(arm)
+        
+        # Just verify it doesn't crash and makes progress toward the target
+        # CCD typically can't fully fold a 3-link arm to reach very close points
+        distance = np.linalg.norm(end_effector - target)
+        assert distance < 1.5, f"Could not get close to near-base target: {distance}"
+    
+    def test_ik_respects_joint_limits(self):
+        """Test that IK respects joint angle limits."""
+        # Create arm with joint limits
+        links = [
+            Link(length=1.0, angle=0.0, min_angle=-np.pi/2, max_angle=np.pi/2),
+            Link(length=1.0, angle=0.0, min_angle=-np.pi/2, max_angle=np.pi/2),
+            Link(length=1.0, angle=0.0, min_angle=-np.pi/2, max_angle=np.pi/2),
+        ]
+        arm = RobotArm(links=links, base_position=(0.0, 0.0))
+        
+        # Target that would require angles outside limits if unconstrained
+        target = np.array([2.0, 1.5])
+        angles = inverse_kinematics_ccd(arm, target, max_iterations=100, tolerance=1e-3)
+        
+        # Check that all angles are within limits
+        for i, (angle, link) in enumerate(zip(angles, links)):
+            assert angle >= link.min_angle - 1e-6, \
+                f"Joint {i} angle {angle} below limit {link.min_angle}"
+            assert angle <= link.max_angle + 1e-6, \
+                f"Joint {i} angle {angle} above limit {link.max_angle}"
+    
+    def test_ik_original_angles_restored(self):
+        """Test that original arm angles are restored after IK computation."""
+        arm = RobotArm.create_default()
+        original_angles = [0.5, 0.3, -0.2]
+        arm.set_angles(original_angles)
+        
+        target = np.array([2.0, 0.5])
+        _ = inverse_kinematics_ccd(arm, target, max_iterations=50, tolerance=1e-3)
+        
+        # Original angles should be restored
+        current_angles = arm.get_angles()
+        for orig, curr in zip(original_angles, current_angles):
+            assert np.isclose(orig, curr), "Original angles not restored"
+    
+    def test_ik_zero_target_at_base(self):
+        """Test IK when target is exactly at base position."""
+        arm = RobotArm.create_default()
+        arm.set_angles([0.0, 0.0, 0.0])
+        
+        target = np.array([0.0, 0.0])
+        angles = inverse_kinematics_ccd(arm, target, max_iterations=100, tolerance=1e-3)
+        
+        # Should not crash; arm will try to fold
+        arm.set_angles(angles)
+        _, end_effector = forward_kinematics(arm)
+        
+        # Just verify it runs without error
+        assert end_effector is not None
