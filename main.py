@@ -3,7 +3,7 @@
 import numpy as np
 from roboarm.arm import RobotArm
 from roboarm.kinematics import forward_kinematics, inverse_kinematics_ccd
-from roboarm.viz import plot_arm, create_animation
+from roboarm.viz import plot_arm, create_animation, interactive_arm
 
 
 def demo_static():
@@ -80,6 +80,12 @@ def demo_ik():
     print("\nIK test passed!" if distance < 0.01 else "\nIK test failed!")
 
 
+def demo_interactive():
+    """Run interactive mode."""
+    print("Starting interactive mode...")
+    interactive_arm()
+
+
 if __name__ == "__main__":
     import sys
     
@@ -88,8 +94,10 @@ if __name__ == "__main__":
             demo_animation()
         elif sys.argv[1] == "ik":
             demo_ik()
+        elif sys.argv[1] == "interactive":
+            demo_interactive()
         else:
             print(f"Unknown command: {sys.argv[1]}")
-            print("Usage: python main.py [animate|ik]")
+            print("Usage: python main.py [animate|ik|interactive]")
     else:
         demo_static()

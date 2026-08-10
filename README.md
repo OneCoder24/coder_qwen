@@ -51,6 +51,22 @@ This will:
 3. Use CCD algorithm to compute required joint angles
 4. Display the result with matplotlib
 
+### Run Interactive Mode
+
+Open an interactive window where you can click to set targets:
+
+```bash
+python main.py interactive
+```
+
+**Controls:**
+- **Click** anywhere in the window to set a new target position
+- **C** key: Clear the end-effector trail
+- **R** key: Reset arm to home position (all angles = 0)
+- **Close window**: Exit
+
+The arm will smoothly interpolate towards the computed IK solution, respecting joint limits if defined.
+
 ### Run Tests
 
 ```bash
